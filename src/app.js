@@ -1,67 +1,146 @@
-// all comments in jsx syntax are for just above line of that comment
-
-console.log('App.js is running');
-
-const app = {
-  title: 'Indecision App',
-  subtitle: 'Put your life in the hands of computer',
-  options: []
-};
-
-const onFormSubmit = e => {
-  e.preventDefault();
-
-  const option = e.target.elements.option.value;
-
-  if (option) {
-    app.options.push(option);
-    e.target.elements.option.value = '';
-    render();
+class IndecisionApp extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      options: []
+    };
+    this.handleDeleteOptions = this.handleDeleteOptions.bind(this);
+    this.handleAddOption = this.handleAddOption.bind(this);
+    this.handlePick = this.handlePick.bind(this);
   }
-};
 
-const onRemoveAll = () => {
-  app.options = [];
-  render();
-};
+  handlePick() {
+    const randomNum = Math.floor(Math.random() * this.state.options.length);
+    const option = this.state.options[randomNum];
+    alert(option);
+  }
 
-const onMakeDecision = () => {
-  const randomNum = Math.floor(Math.random() * app.options.length);
-  const option = app.options[randomNum];
-  alert(option);
-};
+  handleDeleteOptions() {
+    this.setState(() => {
+      return {
+        options: []
+      };
+    });
+  }
 
-const appRoot = document.getElementById('app');
+  handleAddOption(option) {
+    if (!option) {
+      return 'Enter valid value to add item';
+    } else if (this.state.options.indexOf(option) > -1) {
+      return 'This option already exists';
+    }
 
-// to render on browser screen
-const render = () => {
-  const template = (
-    <div>
-      <h1>{app.title}</h1>
-      {app.subtitle && <p>{app.subtitle}</p>}
-      {/*if first condition is true it is going to use second condition else it is going to use 1st condition (whcih is false so nothing is going to show on screen)*/}
-      <p>
-        {app.options && app.options.length > 0
-          ? 'Here are your options'
-          : 'No options'}
-      </p>
-      {/* if options doesn't exist or its length is 0 i.e. empty array then it is false so it will render 'No options' else it will render 'Here are your options' */}
-      <button disabled={app.options.length === 0} onClick={onMakeDecision}>
-        What should I do?
-      </button>
-      <button onClick={onRemoveAll}>Remove all</button>
-      <ol>
-        {app.options.map((value, index) => <li id={index}>{value}</li>)}
-        {/* map over app.options getting back an array of lis (set key and text). Setting key (can be id also) is must when using array for dom elements */}
-      </ol>
-      <form onSubmit={onFormSubmit}>
-        <input type="text" name="option" />
-        <button>Add option</button>
-      </form>
-    </div>
-  );
+    this.setState(prevState => {
+      return {
+        options: prevState.options.concat(option)
+      };
+    });
+  }
 
-  ReactDOM.render(template, appRoot);
-};
+  render() {
+    const title = 'Indecision';
+    const subTitle = 'Put your life in the hands of a computer';
 
-render();
+    return (
+      <div>
+        <Header title={title} subTitle={subTitle} />
+        {/* whatever is passed as property from here can be used in the class (Header) in this case under this.props as objects */}
+        <Action
+          hasOptions={this.state.options.length > 0}
+          handlePick={this.handlePick}
+        />
+        {/* if a function reference is passed then that function can also be called under this.props inside the class. That call will call the function here do the tasks */}
+        <Options
+          options={this.state.options}
+          handleDeleteOptions={this.handleDeleteOptions}
+        />
+        <AddOption handleAddOption={this.handleAddOption} />
+      </div>
+    );
+  }
+}
+
+class Header extends React.Component {
+  render() {
+    return (
+      <div>
+        <h1>{this.props.title}</h1>
+        {/* this.props contains all the attributes passed to the component when it is rendered as object */}
+        <h2>{this.props.subTitle}</h2>
+      </div>
+    );
+  }
+}
+
+class Action extends React.Component {
+  render() {
+    return (
+      <div>
+        <button
+          onClick={this.props.handlePick}
+          disabled={!this.props.hasOptions}>
+          {/* here this.props.handlePick is a function reference passed as property & used as onCLick property for button here. onClick event on button will call that function. */}
+          What should i do
+        </button>
+      </div>
+    );
+  }
+}
+
+class Options extends React.Component {
+  render() {
+    return (
+      <div>
+        <button onClick={this.props.handleDeleteOptions}>Remove all</button>
+        {this.props.options.map(option => (
+          <Option key={option} option={option} />
+        ))}
+      </div>
+    );
+  }
+}
+
+class Option extends React.Component {
+  render() {
+    return <li>{this.props.option}</li>;
+  }
+}
+
+class AddOption extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleAddOption = this.handleAddOption.bind(this);
+    this.state = {
+      error: undefined
+    };
+  }
+
+  handleAddOption(e) {
+    e.preventDefault();
+    const option = e.target.elements.option.value.trim();
+    const error = this.props.handleAddOption(option); // this is calling function from props
+
+    if (error !== 'This option already exists') {
+      e.target.elements.option.value = '';
+    }
+
+    this.setState(() => {
+      return { error };
+    });
+  }
+
+  render() {
+    return (
+      <div>
+        {this.state.error && <p>{this.state.error}</p>}
+        <form onSubmit={this.handleAddOption}>
+          {/* this.handleAddOption is fnction from this class not from props */}
+          <input type="text" name="option" />
+          <button>Add option</button>
+        </form>
+      </div>
+    );
+  }
+}
+
+ReactDOM.render(<IndecisionApp />, document.getElementById('app'));
