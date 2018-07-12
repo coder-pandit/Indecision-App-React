@@ -7,6 +7,39 @@ class IndecisionApp extends React.Component {
     this.handleDeleteOptions = this.handleDeleteOptions.bind(this);
     this.handleAddOption = this.handleAddOption.bind(this);
     this.handlePick = this.handlePick.bind(this);
+    this.handleDeleteOption = this.handleDeleteOption.bind(this);
+  }
+
+  // @Override (annotation is not available in js just written for understanding)
+  // will be called as soon as component is rendered to screen
+  componentDidMount() {
+    try {
+      // getting data from local storage as soon as component is rendered to screen for first time
+      const json = localStorage.getItem('options');
+      const options = JSON.parse(json);
+
+      if (options) {
+        this.setState(() => ({ options }));
+      }
+    } catch (e) {
+      // Do nothing
+    }
+  }
+
+  // @Override
+  // will be called as soon as component is updated i.e. any state change or prop change
+  componentDidUpdate(prevProp, prevState) {
+    // saving data to local storage if there is any change in data
+    if (prevState.options.length !== this.state.options.length) {
+      const json = JSON.stringify(this.state.options);
+      localStorage.setItem('options', json); // saving data to localStorage
+    }
+  }
+
+  // @Override
+  // called just before component goes away
+  componentWillUnmount() {
+    console.log('componentWillUnmount');
   }
 
   handlePick() {
@@ -15,12 +48,17 @@ class IndecisionApp extends React.Component {
     alert(option);
   }
 
+  // to remove all items
   handleDeleteOptions() {
-    this.setState(() => {
-      return {
-        options: []
-      };
-    });
+    this.setState(() => ({ options: [] })); // for returning object in one line in arrow functions just wrap the object in parentheses.
+  }
+
+  // to remove single item
+  handleDeleteOption(optionToRemove) {
+    this.setState((prevState) => ({
+      // if filter return false that item will be removed from array
+      options: prevState.options.filter(option => optionToRemove !== option)
+    }));
   }
 
   handleAddOption(option) {
@@ -30,20 +68,16 @@ class IndecisionApp extends React.Component {
       return 'This option already exists';
     }
 
-    this.setState(prevState => {
-      return {
-        options: prevState.options.concat(option)
-      };
-    });
+    this.setState(prevState => ({ options: prevState.options.concat(option) }));
   }
 
+  // @Override
   render() {
-    const title = 'Indecision';
     const subTitle = 'Put your life in the hands of a computer';
 
     return (
       <div>
-        <Header title={title} subTitle={subTitle} />
+        <Header subTitle={subTitle} />
         {/* whatever is passed as property from here can be used in the class (Header) in this case under this.props as objects */}
         <Action
           hasOptions={this.state.options.length > 0}
@@ -53,6 +87,8 @@ class IndecisionApp extends React.Component {
         <Options
           options={this.state.options}
           handleDeleteOptions={this.handleDeleteOptions}
+          handleDeleteOption={this.handleDeleteOption}
+          // want to delete single option so it should passed to Option but we can't pass it to Option directly so we have to pass it to Options first then from Options we will pass it to Option
         />
         <AddOption handleAddOption={this.handleAddOption} />
       </div>
@@ -60,52 +96,73 @@ class IndecisionApp extends React.Component {
   }
 }
 
-class Header extends React.Component {
-  render() {
-    return (
-      <div>
-        <h1>{this.props.title}</h1>
-        {/* this.props contains all the attributes passed to the component when it is rendered as object */}
-        <h2>{this.props.subTitle}</h2>
-      </div>
-    );
-  }
+// stateless components (fadster as compared to class)
+// better to use these for simple tasks like only want to render something without state changes and other things
+const Header = (props) => {
+  return (
+    <div>
+      <h1>{props.title}</h1>
+      {/* props contains all the attributes passed to the component when it is rendered as object */}
+      {props.subTitle && <h2>{props.subTitle}</h2>}
+    </div>
+  );
 }
 
-class Action extends React.Component {
-  render() {
-    return (
-      <div>
-        <button
-          onClick={this.props.handlePick}
-          disabled={!this.props.hasOptions}>
-          {/* here this.props.handlePick is a function reference passed as property & used as onCLick property for button here. onClick event on button will call that function. */}
-          What should i do
+// defaultProps will be used if property is not found in the props object
+Header.defaultProps = {
+  title: 'Indecision'
+};
+
+const Action = (props) => {
+  return (
+    <div>
+      <button
+        onClick={props.handlePick}
+        disabled={!props.hasOptions}>
+        {/* here props.handlePick is a function reference passed as property & used as onCLick property for button here. onClick event on button will call that function. */}
+        What should i do
         </button>
-      </div>
-    );
-  }
+    </div>
+  );
 }
 
-class Options extends React.Component {
-  render() {
-    return (
-      <div>
-        <button onClick={this.props.handleDeleteOptions}>Remove all</button>
-        {this.props.options.map(option => (
-          <Option key={option} option={option} />
-        ))}
-      </div>
-    );
-  }
+const Options = (props) => {
+  return (
+    <div>
+      <button onClick={props.handleDeleteOptions}>Remove all</button>
+      {props.options.length === 0 && <p>Please add an option to get started</p>}
+      {
+        props.options.map(optionText => (
+          <Option
+            key={optionText}
+            optionText={optionText}
+            handleDeleteOption={props.handleDeleteOption}
+            // this is to delete single optiom which will be used in Option so we will directly pass it to Option
+          />
+        ))
+      }
+    </div>
+  );
 }
 
-class Option extends React.Component {
-  render() {
-    return <li>{this.props.option}</li>;
-  }
+const Option = (props) => {
+  return (
+    <div>
+      <li>{props.optionText}</li>
+      <button
+        onClick={(e) => {
+          // if button is clicked call handleDeleteOption with the argument as optionText
+          // it will trigger method in Options which will call method in IndecisionApp
+          props.handleDeleteOption(props.optionText);
+        }}
+      >
+        Remove
+      </button>
+    </div>
+  );
 }
 
+// class based components (useful when want to define some states & other properties)
 class AddOption extends React.Component {
   constructor(props) {
     super(props);
@@ -119,16 +176,12 @@ class AddOption extends React.Component {
     e.preventDefault();
     const option = e.target.elements.option.value.trim();
     const error = this.props.handleAddOption(option); // this is calling function from props
-
-    if (error !== 'This option already exists') {
+    if (!error) {
       e.target.elements.option.value = '';
     }
-
-    this.setState(() => {
-      return { error };
-    });
+    this.setState(() => ({ error }));
   }
-
+ 
   render() {
     return (
       <div>
