@@ -3,16 +3,24 @@ import AddOption from './AddOption';
 import Header from './Header';
 import Action from './Action';
 import Options from './Options';
+import OptionModal from './OptionModal';
 
 class IndecisionApp extends Component {
   state = {
-    options: []
+    options: [],
+    selectedOption: undefined
   };
 
+  // show alert box when what should i do is clicked
   handlePick = () => {
     const randomNum = Math.floor(Math.random() * this.state.options.length);
-    const option = this.state.options[randomNum];
-    alert(option);
+    const selectedOption = this.state.options[randomNum];
+    this.setState(() => ({ selectedOption }));
+  };
+
+  // to close alert box on okay button click i.e. clearing selected option
+  handleClearSelectedOptions = () => {
+    this.setState(() => ({ selectedOption: undefined }));
   };
 
   // to remove all items
@@ -92,6 +100,10 @@ class IndecisionApp extends Component {
           // want to delete single option so it should passed to Option but we can't pass it to Option directly so we have to pass it to Options first then from Options we will pass it to Option
         />
         <AddOption handleAddOption={this.handleAddOption} />
+        <OptionModal
+          selectedOption={this.state.selectedOption}
+          handleClearSelectedOptions={this.handleClearSelectedOptions}
+        />
       </div>
     );
   }
