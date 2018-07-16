@@ -88,18 +88,22 @@ class IndecisionApp extends Component {
       <div>
         <Header subTitle={subTitle} />
         {/* whatever is passed as property from here can be used in the class (Header) in this case under this.props as objects */}
-        <Action
-          hasOptions={this.state.options.length > 0}
-          handlePick={this.handlePick}
-        />
-        {/* if a function reference is passed then that function can also be called under this.props inside the class. That call will call the function here do the tasks */}
-        <Options
-          options={this.state.options}
-          handleDeleteOptions={this.handleDeleteOptions}
-          handleDeleteOption={this.handleDeleteOption}
-          // want to delete single option so it should passed to Option but we can't pass it to Option directly so we have to pass it to Options first then from Options we will pass it to Option
-        />
-        <AddOption handleAddOption={this.handleAddOption} />
+        <div className="container">
+          <Action
+            hasOptions={this.state.options.length > 0}
+            handlePick={this.handlePick}
+          />
+          {/* if a function reference is passed then that function can also be called under this.props inside the class. That call will call the function here do the tasks */}
+          <div className="widget">
+            <Options
+              options={this.state.options}
+              handleDeleteOptions={this.handleDeleteOptions}
+              handleDeleteOption={this.handleDeleteOption}
+              // want to delete single option so it should passed to Option but we can't pass it to Option directly so we have to pass it to Options first then from Options we will pass it to Option
+            />
+            <AddOption handleAddOption={this.handleAddOption} />
+          </div>
+        </div>
         <OptionModal
           selectedOption={this.state.selectedOption}
           handleClearSelectedOptions={this.handleClearSelectedOptions}
